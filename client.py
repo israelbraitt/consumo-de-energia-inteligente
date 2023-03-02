@@ -60,7 +60,7 @@ def userValidation(client):
 
         dic_user = { "username" : username , "registration" : registration }
 
-        request = f'GET /validacao-usuario {json.dumps(dic_user)}'
+        request = f'GET /validacao-usuario HTTP/1.1 {json.dumps(dic_user)}'
         sendMessages(client, request)
     except:
         print("Usuário não encontrado")
@@ -79,11 +79,11 @@ def selectionMenu(client):
             dic_user = { "username" : username }
 
             if (choice == 1):
-                request = f'GET /medicoes/ultima-medicao {json.dumps(dic_user)}'
+                request = f'GET /medicoes/ultima-medicao HTTP/1.1 {json.dumps(dic_user)}'
             elif (choice == 2):
-                request = f'GET /gerar-fatura {json.dumps(dic_user)}'
+                request = f'GET /gerar-fatura HTTP/1.1 {json.dumps(dic_user)}'
             elif (choice == 3):
-                request = f'GET /alerta-consumo {json.dumps(dic_user)}'
+                request = f'GET /alerta-consumo HTTP/1.1 {json.dumps(dic_user)}'
             elif (choice == 4):
                 client.close()
                 return
@@ -113,11 +113,12 @@ def messagesTreatment(message):
 
 
 def messageData(message):
-    status_code = message.split(" ")[0]
+    http_version = message.split(" ")[0]
+    status_code = message.split(" ")[1]
     status_message = ""
 
     try:    
-        # Prepara as mensagens
+        # Prepara as mensagens no padrão JSON
         message = message.replace("{","{dir") 
         message = message.replace("}","esq}")
         message = message.split("{")[1].split("}")[0]
@@ -129,7 +130,7 @@ def messageData(message):
     except:
         body_content = "{}"
 
-    return { "status_code" : status_code, "status_message" : status_message }
+    return { "http_version" : http_version , "status_code" : status_code, "status_message" : status_message }
 
 
 main()

@@ -47,12 +47,10 @@ def messagesTreatment(client):
                     validation_client = dao_inst.getClient(username, registration_number)
 
                     if (validation_client == True):
-                        pass
-                        # enviar mensagem com status code 200
+                        request = f'HTTP/1.1 200 OK'
                     elif (validation_client == False):
-                        pass
                         deleteClient(client)
-                        # enviar mensagem com status code
+                        request = f'HTTP/1.1 404 Not Found'
                 
                 elif (data["url_content"] == "/medicoes/ultima-medicao"):
                     pass
@@ -95,10 +93,11 @@ def deleteClient(client):
 def messageData(message):
     method = message.split(" ")[0]
     url_content = message.split(" ")[1]
+    http_version = message.split(" ")[2]
     body_content = ""
 
     try:    
-        # Prepara as mensagens
+        # Prepara as mensagens no padrão JSON
         message = message.replace("{","{dir") 
         message = message.replace("}","esq}")
         message = message.split("{")[1].split("}")[0]
@@ -110,7 +109,7 @@ def messageData(message):
     except:
         body_content = "{}"
 
-    return { "method" : method, "url_content" : url_content, "body_content" : body_content }
+    return { "method" : method, "url_content" : url_content, "http_version" : http_version, "body_content" : body_content }
 
 
 main()
