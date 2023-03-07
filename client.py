@@ -58,7 +58,7 @@ def userValidation(client):
         print("Digite seu número de matrícula")
         registration = input("Matrícula: ")
 
-        dic_user = { "username" : username , "registration" : registration }
+        dic_user = { "username" : username, "registration" : registration }
 
         request = f'GET /validacao-usuario HTTP/1.1 {json.dumps(dic_user)}'
         sendMessages(client, request)
@@ -76,7 +76,7 @@ def selectionMenu(client):
             print("4 - Sair")
             choice = input()
 
-            dic_user = { "username" : username }
+            dic_user = { "username" : username, "registration" : registration }
 
             if (choice == 1):
                 request = f'GET /medicoes/ultima-medicao HTTP/1.1 {json.dumps(dic_user)}'

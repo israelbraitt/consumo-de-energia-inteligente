@@ -3,11 +3,14 @@ import socket
 import json
 from dao import *
 
-HOST = 'localhost'
+HOST = '127.0.0.1'
 PORT = 50000
 BUFFER_SIZE = 2048
 
 clients = []
+
+# taxa de consumo de energia
+CONSUMPTION_RATE = 3
 
 def main():
     # os parâmetros do método socket indicam a família de protocolo (IPV4)
@@ -35,7 +38,7 @@ def messagesTreatment(client):
     while True:
         try:
             message = client.recv(BUFFER_SIZE)
-            data = messageData(str(message.decode('utf-8')))
+            data = getMessageData(str(message.decode('utf-8')))
             print("Mensagem recebida:", message)
 
             if (data["method"] == "GET"):
@@ -53,11 +56,59 @@ def messagesTreatment(client):
                         request = f'HTTP/1.1 404 Not Found'
                 
                 elif (data["url_content"] == "/medicoes/ultima-medicao"):
-                    pass
+                    registration_number = data["body_content"]["registration"]
+
+                    dao_inst = DAO()
+                    last_measurement = dao_inst.getLastMeasurement(registration_number)
+
+                    if (last_measurement != (0, 0)):
+                        date_time = last_measurement[0]
+                        consumption = last_measurement[1]
+                        dic_last_measurement = { "date_time" : date_time, "consumption" : consumption}
+                        request = f'HTTP/1.1 200 {json.dumps(dic_last_measurement)}'
+                    else:
+                        request = f'HTTP/1.1 404 Not Found'
+
                 elif (data["url_content"] == "/gerar-fatura"):
-                    pass
+                    registration_number = data["body_content"]["registration"]
+
+                    dao_inst = DAO()
+                    last_measurements = dao_inst.get5LastMeasurements(registration_number)
+
+                    
+                    if (last_measurements[0] != (0, 0) and last_measurements[1] != (0, 0)):
+                        consumption_final = last_measurements[0][1]
+                        consumption_inicial = last_measurements[1][1]
+                        consumption_total = consumption_final - consumption_inicial
+
+                        amount_payment = consumption_total * CONSUMPTION_RATE
+                        
+                        dic_invoice = { "consumption" : consumption_total , "amount_payment" : amount_payment}
+                        request = f'HTTP/1.1 200 {json.dumps(dic_invoice)}'
+                    else:
+                        request = f'HTTP/1.1 404 Not Found'
+
                 elif (data["url_content"] == "/alerta-consumo"):
-                    pass
+                    registration_number = data["body_content"]["registration"]
+
+                    dao_inst = DAO()
+                    last_measurements = dao_inst.get5LastMeasurements(registration_number)
+
+                    
+                    if (last_measurements[0] != (0, 0) and last_measurements[1] != (0, 0)):
+                        variation_consumption_list = []
+                        i = 4
+                        while i > 0:
+                            consumption_final = last_measurements[i][1]
+                            consumption_inicial = last_measurements[i-1][1]
+                            consumption_total = consumption_final - consumption_inicial
+                            variation_consumption_list.append(consumption_total)
+                            i -= 1
+                        
+                        dic_invoice = { "consumption" : consumption_total }
+                        request = f'HTTP/1.1 200 {json.dumps(dic_invoice)}'
+                    else:
+                        request = f'HTTP/1.1 404 Not Found'
 
             elif (data["method"] == "POST"):
                 pass
@@ -90,7 +141,7 @@ def deleteClient(client):
     clients.remove(client)
 
 
-def messageData(message):
+def getMessageData(message):
     method = message.split(" ")[0]
     url_content = message.split(" ")[1]
     http_version = message.split(" ")[2]
