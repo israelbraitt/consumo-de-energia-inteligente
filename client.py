@@ -1,7 +1,6 @@
 import threading
 import socket
 import json
-from time import sleep
 
 HOST = '127.0.0.1'
 PORT = 50000

@@ -3,7 +3,7 @@ class DAO:
     def __init__(self):
         pass
 
-    
+    @staticmethod
     def getClient(username, registration_number):
         if (username != ""):
             file = open("database/dados_clientes.txt")
@@ -29,7 +29,8 @@ class DAO:
         
         elif (username == "" and registration_number == ""):
             return False
-        
+
+    @staticmethod        
     def getLastMeasurement(registration_number):
         if (registration_number != ""):
             file = open("database/medicoes.txt")
@@ -42,7 +43,8 @@ class DAO:
                     return (date_time, consumption)
             file.close()
             return (0, 0)
-    
+
+    @staticmethod    
     def get5LastMeasurements(registration_number):
         measurement_list = []
         list_itens = 0
