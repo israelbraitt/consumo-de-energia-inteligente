@@ -7,11 +7,14 @@ HOST = '127.0.0.1'
 TCP_PORT = 50000
 UDP_PORT = 60000
 BUFFER_SIZE = 2048
+FORMAT = 'utf-8'
 
-clients = []
+# coding=<encoding name>clients = []
 
 # Taxa de consumo de energia
 TAXA_CONSUMO = 3
+
+clients = []
 
 def main():
     # Cria um socket com conexão TCP e outro com conexão UDP
@@ -265,15 +268,17 @@ def montarResponse(status_code, status_mensagem):
     host = "127.0.0.1:50000"
     user_agent = "server-conces-energia"
     content_type = "text/html"
-    content_length = len(status_mensagem)
+    body = "{\"validar\": \"1\"}"
+    content_length = len(body)
 
-    response = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nContent-Type: {5}\r\nContent-Length: {6}" .format(http_version, 
+    response = "{0} {1} {2}\nHost: {3}\nUser-Agent: {4}\nContent-Type: {5}\nContent-Length: {6}\n\n{7}" .format(http_version, 
                                                                                                                 status_code, 
                                                                                                                 status_mensagem, 
                                                                                                                 host, 
                                                                                                                 user_agent, 
                                                                                                                 content_type, 
-                                                                                                                content_length)
+                                                                                                                content_length,
+                                                                                                                body)
     
     return response
 
