@@ -11,7 +11,7 @@ BUFFER_SIZE = 2048
 clients = []
 
 # Taxa de consumo de energia
-CONSUMPTION_RATE = 3
+TAXA_CONSUMO = 3
 
 def main():
     # Cria um socket com conexão TCP e outro com conexão UDP
@@ -33,18 +33,18 @@ def main():
         # Aceita a conexão com os sockets dos clientes
         # conn_client é do tipo 'socket.socket' e addr_client é do tipo 'tupla'
         conn_client_tcp, addr_client_tcp = server_tcp.accept()
-        print("Conectado em", addr_client_tcp)
+        print("Conectado com um cliente em:", addr_client_tcp)
         clients.append(conn_client_tcp)
         
         # Recebe mensagens dos clientes através da conexão TCP
-        thread_tcp = threading.Thread(target=messagesTreatment, args=[conn_client_tcp])
+        thread_tcp = threading.Thread(target=tratadorRequests, args=[conn_client_tcp])
         thread_tcp.start()
 
         # Recebe mensagens dos clientes através da conexão UDP
-        message_udp, addr_client_udp = server_udp.recvfrom(BUFFER_SIZE)
+        mensagem_udp, addr_client_udp = server_udp.recvfrom(BUFFER_SIZE)
         print("Conectado em", addr_client_udp)
 
-def messagesTreatment(client):
+def tratadorRequests(client):
     """
     Faz o tratamento dos "requests" dos clientes
 
@@ -56,144 +56,144 @@ def messagesTreatment(client):
     """
     while True:
         try:
-            message = client.recv(BUFFER_SIZE)
-            data = getMessageData(message.decode('utf-8'))
-            print("Mensagem recebida:", message)
-            print("data", data)
+            mensagem = client.recv(BUFFER_SIZE)
+            dados = obterDadosMensagem(mensagem.decode('utf-8'))
+            print("Mensagem recebida:", mensagem)
+            print("data", dados)
             
-            if (data["method"] == "GET"):
-                if (data["url_content"] == "/validacao-usuario"):
-                    username = data["body_content"]["username"]
-                    registration_number = data["body_content"]["registration"]
+            if (dados["method"] == "GET"):
+                pass
+
+            elif (dados["method"] == "POST"):
+                if (dados["url_content"] == "/validacao-usuario"):
+                    username = dados["body_content"]["username"]
+                    matricula = dados["body_content"]["matricula"]
                     
                     # Consulta se o cliente está registrado na base de dados
                     dao_inst = DAO()
-                    validation_client = dao_inst.getClient(username, registration_number)
+                    validacao_client = dao_inst.getClient(username, matricula)
 
-                    if (validation_client == True):
-                        request = assembleResponse("200", "OK")
-                        sendMessages(client, request)
+                    if (validacao_client == True):
+                        request = montarResponse("200", "OK")
+                        enviarMensagem(client, request)
 
-                    elif (validation_client == False):
-                        request = assembleResponse("404", "Not Found")
-                        sendMessages(request, client)
-                        deleteClient(client)
+                    elif (validacao_client == False):
+                        request = montarResponse("404", "Not Found")
+                        enviarMensagem(client, request)
+                        detelarClient(client)
                 
-                elif (data["url_content"] == "/medicoes/ultima-medicao"):
-                    registration_number = data["body_content"]["registration"]
+                elif (dados["url_content"] == "/medicoes/ultima-medicao"):
+                    matricula = dados["body_content"]["matricula"]
 
                     # Consulta a última medição associada a determinado número de matrícula
                     dao_inst = DAO()
-                    last_measurement = dao_inst.getLastMeasurement(registration_number)
+                    ultima_medicao = dao_inst.getUltimaMedicao(matricula)
 
-                    if (last_measurement != (0, 0)):
+                    if (ultima_medicao != (0, 0)):
                         # Retorna a data, a hora e o consumo registrado na última medição
-                        date_time = last_measurement[0]
-                        consumption = last_measurement[1]
-                        dic_last_measurement = { "date_time" : date_time, "consumption" : consumption}
+                        data_hora = ultima_medicao[0]
+                        consumo = ultima_medicao[1]
+                        dic_ultima_medicao = { "data_hora" : data_hora, "consumo" : consumo}
                         
-                        request = assembleResponse("200", json.dumps(dic_last_measurement))
-                        sendMessages(client, request)
+                        request = montarResponse("200", json.dumps(dic_ultima_medicao))
+                        enviarMensagem(client, request)
                     else:
-                        request = assembleResponse("404", "Not Found")
-                        sendMessages(client, request)
+                        request = montarResponse("404", "Not Found")
+                        enviarMensagem(client, request)
 
-                elif (data["url_content"] == "/gerar-fatura"):
-                    registration_number = data["body_content"]["registration"]
+                elif (dados["url_content"] == "/gerar-fatura"):
+                    matricula = dados["body_content"]["matricula"]
 
                     # Consulta as 2 últimas medições associadas a determinado número de matrícula
                     dao_inst = DAO()
-                    last_2_measurements = dao_inst.get2LastMeasurements(registration_number)
-                    print(last_2_measurements)
-                    if (last_2_measurements[0] != ('0', '0') and last_2_measurements[1] != ('0', '0')):
-                        date, final_consumption = last_2_measurements[0]
-                        date, inicial_consumption = last_2_measurements[1]
-                        total_consumption = int(final_consumption) - int(inicial_consumption)
+                    ultimas_2_medicoes = dao_inst.get2UltimasMedicoes(matricula)
+                    print(ultimas_2_medicoes)
+                    if (ultimas_2_medicoes[0] != ('0', '0') and ultimas_2_medicoes[1] != ('0', '0')):
+                        data, consumo_final= ultimas_2_medicoes[0]
+                        data, consumo_inicial = ultimas_2_medicoes[1]
+                        consumo_total = int(consumo_final) - int(consumo_inicial)
                         
                         # Multiplica o total de consumo do último período registrado
                         # pelo valor da taxa de consumo
-                        amount_payment = total_consumption * CONSUMPTION_RATE
+                        valor_pagamento = consumo_total * TAXA_CONSUMO
                         
-                        dic_invoice = { "consumption" : total_consumption , "amount_payment" : amount_payment}
+                        dic_fatura = { "consumo" : consumo_total , "valor_pagamento" : valor_pagamento}
                         
-                        request = assembleResponse("202", json.dumps(dic_invoice))
-                        sendMessages(client, request)
+                        request = montarResponse("202", json.dumps(dic_fatura))
+                        enviarMensagem(client, request)
                     else:
-                        request = assembleResponse("404", "Not Found")
-                        sendMessages(client, request)
+                        request = montarResponse("404", "Not Found")
+                        enviarMensagem(client, request)
 
-                elif (data["url_content"] == "/alerta-consumo"):
-                    registration_number = data["body_content"]["registration"]
+                elif (dados["url_content"] == "/alerta-consumo"):
+                    matricula = dados["body_content"]["matricula"]
                     
                     # Consulta as 5 últimas medições associadas a determinado número de matrícula
                     dao_inst = DAO()
-                    last_5_measurements = dao_inst.get5LastMeasurements(registration_number)
+                    ultimas_5_medicoes = dao_inst.get5UltimasMedicoes(matricula)
 
-                    if (last_5_measurements[0] != (0, 0) and last_5_measurements[1] != (0, 0)):
-                        variation_consumption_list = []
+                    if (ultimas_5_medicoes[0] != (0, 0) and ultimas_5_medicoes[1] != (0, 0)):
+                        lista_variacao_consumo = []
                         i = 4
                         while i > 0:
-                            date, final_consumption = last_5_measurements[i-1]
-                            date, inicial_consumption = last_5_measurements[i]
-                            total_consumption = int(final_consumption) - int(inicial_consumption)
+                            data, consumo_final = ultimas_5_medicoes[i-1]
+                            data, consumo_inicial = ultimas_5_medicoes[i]
+                            consumo_total = int(consumo_final) - int(consumo_inicial)
                             # Calcula e salva a variação de consumo dos último 4 meses
-                            variation_consumption_list.append(total_consumption)
+                            lista_variacao_consumo.append(consumo_total)
                             i -= 1
                         
                         # Calcula a média de consumo dos últimos 3 meses anteriores
-                        media = (variation_consumption_list[0] + 
-                                variation_consumption_list[1] +
-                                variation_consumption_list[2])/3
+                        media = (lista_variacao_consumo[0] + 
+                                lista_variacao_consumo[1] +
+                                lista_variacao_consumo[2])/3
                         
-                        if (variation_consumption_list[3] >= media*(1,5)):
+                        if (lista_variacao_consumo[3] >= media*(1,5)):
                             # Calcula a diferença de consumo do último mês em relação
                             # à média de consumo dos últimos 3 meses anteriores
-                            overconsumption = variation_consumption_list[3] - media
-                            dic_invoice = { "overconsumption" : overconsumption }
+                            excesso_consumo = lista_variacao_consumo[3] - media
+                            dic_exc_consumo = { "excesso_consumo" : excesso_consumo }
 
-                            request = assembleResponse("200", json.dumps(dic_invoice))
-                            sendMessages(client, request)
+                            request = montarResponse("200", json.dumps(dic_exc_consumo))
+                            enviarMensagem(client, request)
                         else:
-                            request = assembleResponse("200", "Sem consumo excessivo")
+                            request = montarResponse("200", "Sem consumo excessivo")
                             print(request)
-                            sendMessages(client, request)
+                            enviarMensagem(client, request)
                     else:
-                        request = assembleResponse("404", "Not Found")
-                        sendMessages(client, request)
-
-            elif (data["method"] == "POST"):
-                pass
+                        request = montarResponse("404", "Not Found")
+                        enviarMensagem(client, request)
 
             elif (data["method"] == "PUT"):
                 pass
 
         except:
-            deleteClient(client)
+            detelarClient(client)
             break
 
-def sendMessages(client, message):
+def enviarMensagem(client, mensagem):
     """
     Envia mensagens para determinado cliente
 
         Parâmetros:
-            message (str): mensagem a ser enviada ("response")
+            mensagem (str): mensagem a ser enviada ("response")
             client (socket.socket): cliente conectado
         
         Retornos:
 
     """
     try:
-        client.send(message.encode('utf-8'))
+        client.send(mensagem.encode('utf-8'))
     except:
-        deleteClient(client) 
+        detelarClient(client) 
 
-def broadcast(client, message):
+def broadcast(client, mensagem):
     """
     Envia mensagens para todos os clientes na lista de clientes, exceto
     para o que enviou a mensagem
 
         Parâmetros:
-            message (str): mensagem a ser enviada ("response")
+            mensagem (str): mensagem a ser enviada ("response")
             client (socket.socket): cliente conectado
         
         Retornos:
@@ -202,11 +202,11 @@ def broadcast(client, message):
     for client_item in clients:
         if (client_item != client):
             try:
-                client_item.send(message.encode('utf-8'))
+                client_item.send(mensagem.encode('utf-8'))
             except:
-                deleteClient(client_item)
+                detelarClient(client_item)
 
-def deleteClient(client):
+def detelarClient(client):
     """
     Remove um cliente da lista de clientes
 
@@ -218,28 +218,28 @@ def deleteClient(client):
     """
     clients.remove(client)
 
-def getMessageData(message):
+def obterDadosMensagem(mensagem):
     """
     Obtém os dados de uma "request"
 
         Parâmetros:
-            message (str): mensagem recebida ("request")
+            mensagem (str): mensagem recebida de um cliente ("request")
         
         Retornos:
             um dicionário com o "method", o "url_content" e o "body_content" da "request"
     """
-    method = message.split(" ")[0]
-    url_content = message.split(" ")[1]
+    method = mensagem.split(" ")[0]
+    url_content = mensagem.split(" ")[1]
 
     try:    
         # Prepara as mensagens no padrão JSON
-        message = message.replace("{","{dir") 
-        message = message.replace("}","esq}")
-        message = message.split("{")[1].split("}")[0]
-        message = message.replace("dir","{")
-        message = message.replace("esq","}")
+        mensagem = mensagem.replace("{","{dir") 
+        mensagem = mensagem.replace("}","esq}")
+        mensagem = mensagem.split("{")[1].split("}")[0]
+        mensagem = mensagem.replace("dir","{")
+        mensagem = mensagem.replace("esq","}")
 
-        body_content = json.loads(message)
+        body_content = json.loads(mensagem)
 
     except:
         body_content = "{}"
@@ -250,13 +250,13 @@ def getMessageData(message):
         "body_content": body_content
     }
 
-def assembleResponse(status_code, status_message):
+def montarResponse(status_code, status_mensagem):
     """
     Monta a "response" a ser enviada
 
         Parâmetros:
             status_code (str): código de status da resposta HTTP do servidor
-            status_message (str): mensagem de status da resposta do servidor
+            status_mensagem (str): mensagem de status da resposta do servidor
         
         Retornos:
             response (str): resposta HTTP do servidor
@@ -265,11 +265,11 @@ def assembleResponse(status_code, status_message):
     host = "127.0.0.1:50000"
     user_agent = "server-conces-energia"
     content_type = "text/html"
-    content_length = len(status_message)
+    content_length = len(status_mensagem)
 
     response = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nContent-Type: {5}\r\nContent-Length: {6}" .format(http_version, 
                                                                                                                 status_code, 
-                                                                                                                status_message, 
+                                                                                                                status_mensagem, 
                                                                                                                 host, 
                                                                                                                 user_agent, 
                                                                                                                 content_type, 

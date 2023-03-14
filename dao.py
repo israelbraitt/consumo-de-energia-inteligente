@@ -4,13 +4,13 @@ class DAO:
         pass
 
     @staticmethod
-    def getClient(username, registration_number):
+    def getClient(username, matricula):
         """
         Confere se o cliente está cadastrado ou não na base de dados
 
             Parâmetros:
                 username (str): nome de usuário
-                registration_number (str): número de matrícula do usuário
+                matricula (str): número de matrícula do usuário
             
             Retornos:
                 True (bool): caso os dados do cliente estejam cadastrados
@@ -27,102 +27,102 @@ class DAO:
             file.close()
             return False
         
-        elif (registration_number != ""):
+        elif (matricula != ""):
             file = open("database/dados_clientes.txt")
             lines = file.readlines()
             for line in lines:
-                registration_line = line.split(";")[1]
-                if (registration_line == registration_number):
+                matricula_line = line.split(";")[1]
+                if (matricula_line == matricula):
                     file.close()
                     return True
             file.close()
             return False
         
-        elif (username == "" and registration_number == ""):
+        elif (username == "" and matricula == ""):
             return False
 
     @staticmethod        
-    def getLastMeasurement(registration_number):
+    def getUltimaMedicao(matricula):
         """
         Retorna os dados da última medição associada a determinada matrícula
 
             Parâmetros:
-                registration_number (str): número de matrícula do usuário
+                matricula (str): número de matrícula do usuário
             
             Retornos:
-                (date_time, consumption) (tuple): data, hora e consumo registrados na última medição
+                (data_hora, consumo) (tuple): data, hora e consumo registrados na última medição
                 (0, 0) (tuple): caso não tenha nenhuma medição associada ao número de matrícula
         """
-        if (registration_number != ""):
+        if (matricula != ""):
             file = open("database/medicoes.txt")
             lines = file.readlines()
             for line in lines:
-                registration_line = line.split(";")[1]
-                if (registration_line == registration_number):
-                    date_time = line.split(";")[0]
-                    consumption = line.split(";")[2]
-                    consumption = consumption.split("\n")[0]
-                    return (date_time, consumption)
+                matricula_line = line.split(";")[1]
+                if (matricula_line == matricula):
+                    data_hora = line.split(";")[0]
+                    consumo = line.split(";")[2]
+                    consumo = consumo.split("\n")[0]
+                    return (data_hora, consumo)
             file.close()
             return (0, 0)
 
     @staticmethod    
-    def get2LastMeasurements(registration_number):
+    def get2UltimasMedicoes(matricula):
         """
         Retorna os dados das 2 últimas medições associadas a determinada matrícula
 
             Parâmetros:
-                registration_number (str): número de matrícula do usuário
+                matricula (str): número de matrícula do usuário
             
             Retornos:
-               measurement_list (list[tuple]): lista contendo as 2 últimas medições
+               lista_medicoes (list[tuple]): lista contendo as 2 últimas medições
         """
-        measurement_list = []
+        lista_medicoes = []
         list_itens = 0
-        if (registration_number != ""):
+        if (matricula != ""):
             file = open("database/medicoes.txt")
             lines = file.readlines()
             for line in lines:
-                registration_line = line.split(";")[1]
-                if (registration_line == registration_number):
-                    date_time = line.split(";")[0]
-                    consumption = line.split(";")[2]
-                    consumption = consumption.split("\n")[0]
-                    measurement_list.append((date_time, consumption))
+                matricula_line = line.split(";")[1]
+                if (matricula_line == matricula):
+                    data_hora = line.split(";")[0]
+                    consumo = line.split(";")[2]
+                    consumo = consumo.split("\n")[0]
+                    lista_medicoes.append((data_hora, consumo))
                     
                     list_itens += 1
                     if (list_itens == 2):
                         break;
         file.close()
-        return measurement_list
+        return lista_medicoes
 
     @staticmethod    
-    def get5LastMeasurements(registration_number):
+    def get5UltimasMedicoes(matricula):
         """
         Retorna os dados das 5 últimas medições associadas a determinada matrícula
 
             Parâmetros:
-                registration_number (str): número de matrícula do usuário
+                matricula (str): número de matrícula do usuário
             
             Retornos:
-               measurement_list (list[tuple]): lista contendo as 5 últimas medições
+               lista_medicoes (list[tuple]): lista contendo as 5 últimas medições
         """
-        measurement_list = []
+        lista_medicoes = []
         list_itens = 0
-        if (registration_number != ""):
+        if (matricula != ""):
             file = open("database/medicoes.txt")
             lines = file.readlines()
             for line in lines:
-                registration_line = line.split(";")[1]
-                if (registration_line == registration_number):
-                    date_time = line.split(";")[0]
-                    consumption = line.split(";")[2]
-                    consumption = consumption.split("\n")[0]
-                    measurement_list.append((date_time, consumption))
+                matricula_line = line.split(";")[1]
+                if (matricula_line == matricula):
+                    data_hora = line.split(";")[0]
+                    consumo = line.split(";")[2]
+                    consumo = consumo.split("\n")[0]
+                    lista_medicoes.append((data_hora, consumo))
 
                     list_itens += 1
                     if (list_itens == 5):
                         break;
         file.close()
-        return measurement_list
+        return lista_medicoes
     

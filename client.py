@@ -6,34 +6,47 @@ HOST = '127.0.0.1'
 PORT = 50000
 BUFFER_SIZE = 2048
 username = ''
-registration = ''
+matricula = ''
 
 def main():
-    # os parâmetros do método socket indicam a família de protocolo (IPV4)
-    # e o tipo do protocolo (TCP)
+    # Cria um socket com conexão TCP
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     try:
-        client.connect((HOST, PORT))
+        client.bind((HOST, PORT))
         print("Conectado")
     except:
         return print("Não foi possível se conectar ao servidor")
     
-    userValidation(client)
+    #validarUsuario(client)
+    username = "amancio123"
+    maricula = "13456789"
+    selectionMenu(client)
 
-    thread1 = threading.Thread(target=receiveMessages, args=[client])
-    thread2 = threading.Thread(target=sendMessages, args=[client, username])
+    # Recebe mensagens através da conexão TCP
+    thread1 = threading.Thread(target=receivemensagems, args=[client])
+    # Envia mensagens através da conexão TCP
+    thread2 = threading.Thread(target=enviarMensagem, args=[client, username])
 
     thread1.start()
     thread2.start()
 
 
-def receiveMessages(client):
+def receivemensagems(client):
+    """
+    Recebe mensagens
+
+        Parâmetros:
+            client (socket.socket): cliente conectado
+        
+        Retornos:
+
+    """
     while True:
         try:
-            message = client.recv(BUFFER_SIZE).decode('utf-8')
-            print("Mensagem recebida: " + message + "/n")
-            messagesTreatment()
+            mensagem = client.recv(BUFFER_SIZE).decode('utf-8')
+            print("Mensagem recebida: " + mensagem + "/n")
+            tratadorResponses()
         except:
             print("Não foi possível permanecer conectado ao servidor")
             print("Pressione <Enter> para continuar...")
@@ -41,95 +54,124 @@ def receiveMessages(client):
             break
 
 
-def sendMessages(client, message):
+def enviarMensagem(client, mensagem):
+    """
+    Envia mensagens
+
+        Parâmetros:
+            client (socket.socket): cliente conectado
+            mensagem (str): mensagem a ser enviada
+        
+        Retornos:
+
+    """
     while True:
         try:
-            client.send(f'{message}'.encode('utf-8'))
-            print("Mensagem enviada")
+            client.send(mensagem.encode('utf-8'))
+            
         except:
             return
 
 
-def userValidation(client):
+def validarUsuario(client):
+    """
+    Valida se o usuário está cadastrado na base de dados
+
+        Parâmetros:
+            client (socket.socket): cliente conectado
+        
+        Retornos:
+
+    """
     try:
         print("Digite seu nome de usuário")
         username = input("Usuário: ")
         print("Digite seu número de matrícula")
-        registration = input("Matrícula: ")
+        matricula = input("Matrícula: ")
 
-        dic_user = { "username" : username, "registration" : registration }
+        dic_user = { "username" : username, "matricula" : matricula }
 
         request = f'GET /validacao-usuario HTTP/1.1 {json.dumps(dic_user)}'
-        sendMessages(client, request)
+        enviarMensagem(client, request)
     except:
         print("Usuário não encontrado")
 
 
 def selectionMenu(client):
-    while True:
-        try:
-            print("==========Menu==========")
-            print("1 - Requisitar última medição")
-            print("2 - Solicitar fatura")
-            print("3 - Ver alertas de consumo")
-            print("4 - Sair")
-            choice = input()
+    """
+    Menu de seleção das opções de requisição
 
-            dic_user = { "username" : username, "registration" : registration }
-
-            if (choice == 1):
-                request = f'GET /medicoes/ultima-medicao HTTP/1.1 {json.dumps(dic_user)}'
-            elif (choice == 2):
-                request = f'GET /gerar-fatura HTTP/1.1 {json.dumps(dic_user)}'
-            elif (choice == 3):
-                request = f'GET /alerta-consumo HTTP/1.1 {json.dumps(dic_user)}'
-            elif (choice == 4):
-                client.close()
-                return
-            else:
-                print("Digite uma opção válida")
-                pass
+        Parâmetros:
+            client (socket.socket): cliente conectado
         
-            client.send(f'{request}'.encode('utf-8'))
+        Retornos:
+
+    """
+    while True:
+        request = ""
+        print("==========Menu==========")
+        print("1 - Requisitar última medição")
+        print("2 - Solicitar fatura")
+        print("3 - Ver alertas de consumo")
+        print("4 - Sair")
+        escolha = input()
+
+        dic_user = { "username" : username, "matricula" : matricula }
+
+        if (escolha == "1"):
+            request = f'POST /medicoes/ultima-medicao HTTP/1.1 {json.dumps(dic_user)}'
+            print("enviando sua mensagi, zé mané")
+        elif (escolha == 2):
+            request = f'POST /gerar-fatura HTTP/1.1 {json.dumps(dic_user)}'
+        elif (escolha == 3):
+            request = f'POST /alerta-consumo HTTP/1.1 {json.dumps(dic_user)}'
+        elif (escolha == 4):
+            client.close()
+            return
+        else:
+            print("Digite uma opção válida")
+    
+        enviarMensagem(client, request)
 
 
-        except:
-            pass
+def tratadorResponses(mensagem):
+    """
+    Trata as mensagens recebidas
 
+        Parâmetros:
+            mensagem (str): mensagem a ser enviada
+        
+        Retornos:
 
-def messagesTreatment(message):
+    """
     while True:
         try:
-           data = messageData(str(message.decode('utf-8')))
+           dados = obterDadosMensagem(str(mensagem.decode('utf-8')))
 
-           if (data["status_code"] == "200"):
-                   print(data["status_message"])
-           elif (data["status_code"] == ""):
+           if (dados["status_code"] == "200"):
+                   print(dados["status_mensagem"])
+           elif (dados["status_code"] == ""):
                pass
             
         except:
             break
 
 
-def messageData(message):
-    http_version = message.split(" ")[0]
-    status_code = message.split(" ")[1]
-    status_message = ""
+def obterDadosMensagem(mensagem):
+    """
+    Obtém os dados de uma "response" do servidor
 
-    try:    
-        # Prepara as mensagens no padrão JSON
-        message = message.replace("{","{dir") 
-        message = message.replace("}","esq}")
-        message = message.split("{")[1].split("}")[0]
-        message = message.replace("dir","{")
-        message = message.replace("esq","}")
+        Parâmetros:
+            mensagem (str): mensagem recebida do servidor ("response")
+        
+        Retornos:
+            um dicionário com o "status_code" e a "status_menssage" da "response"
+    """
+    status_code = mensagem.split(" ")[1]
+    status_mensagem = mensagem.split(" ")[2]
+    status_mensagem = status_mensagem.split("\r\n")[0]
 
-        body_content = json.loads(message)
-
-    except:
-        body_content = "{}"
-
-    return { "http_version" : http_version , "status_code" : status_code, "status_message" : status_message }
+    return { "status_code" : status_code, "status_mensagem" : status_mensagem }
 
 
 main()

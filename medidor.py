@@ -2,18 +2,22 @@ import threading
 import socket
 import json
 from time import sleep
+from datetime import datetime
+import medidor_model
 
 HOST = '127.0.0.1'
 PORT = 60000
 BUFFER_SIZE = 2048
 SENDING_INTERVAL = 15
 username = ''
-registration = ''
+matricula = ''
 
 def main():
-    # os parâmetros do método socket indicam a família de protocolo (IPV4)
-    # e o tipo do protocolo (TCP)
+    # Cria um socket com conexão UDP
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    matricula = input("Digite a matrícula do medidor")
+    medidor_inst = medidor_model(matricula)
 
     try:
         client.connect((HOST, PORT))
@@ -21,57 +25,50 @@ def main():
     except:
         return print("Não foi possível se conectar ao servidor")
     
-    userValidation(client)
-
-    thread1 = threading.Thread(target=sendMessages, args=[client, username])
-
-    thread1.start()
-
-
-def sendMessages(client, message):
+    validarUsuario(client)
+    
     while True:
-        try:
-            client.send('123'.encode('utf-8'))
-            print("Mensagem enviada")
-        except:
-            return
-        sleep(SENDING_INTERVAL)
+
+        # Envia mensagens através da conexão UDP
+        thread1 = threading.Thread(target=enviarMensagem, args=[client, username])
+
+        thread1.start()
 
 
-def userValidation(client):
+def enviarMensagem(client, mensagem):
+    """
+    Envia mensagens
+
+        Parâmetros:
+            client (socket.socket): cliente conectado
+            mensagem (str): mensagem a ser enviada
+        
+        Retornos:
+
+    """
     try:
-        print("Digite seu nome de usuário")
-        username = input("Usuário: ")
-        print("Digite seu número de matrícula")
-        registration = input("Matrícula: ")
+        client.sendto(bytes(mensagem, "utf-8"), (HOST, PORT))
+        print("Mensagem enviada")
+    except:
+        return
+    sleep(SENDING_INTERVAL)
 
-        dic_user = { "username" : username, "registration" : registration }
 
-        request = f'GET /validacao-usuario HTTP/1.1 {json.dumps(dic_user)}'
-        sendMessages(client, request)
+def validarUsuario(client):
+    try:
+        dic_user = { "username" : username, "matricula" : matricula }
+
+        request = f'POST /validacao-usuario HTTP/1.1 {json.dumps(dic_user)}'
+        enviarMensagem(client, request)
     except:
         print("Usuário não encontrado")
 
 
-def messageData(message):
-    http_version = message.split(" ")[0]
-    status_code = message.split(" ")[1]
-    status_message = ""
+def enviarMedicoes(consumo_atual):
+    data_hora_atuais = datetime.now()
+    data_hora = data_hora_atuais.strftime('%d/%m/%Y %H:%M:%S')
 
-    try:    
-        # Prepara as mensagens no padrão JSON
-        message = message.replace("{","{dir") 
-        message = message.replace("}","esq}")
-        message = message.split("{")[1].split("}")[0]
-        message = message.replace("dir","{")
-        message = message.replace("esq","}")
-
-        body_content = json.loads(message)
-
-    except:
-        body_content = "{}"
-
-    return { "http_version" : http_version , "status_code" : status_code, "status_message" : status_message }
+    return { "consumo_atual" : consumo_atual , "data_hora" : data_hora }
 
 
 main()
