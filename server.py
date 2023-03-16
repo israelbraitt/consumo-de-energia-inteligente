@@ -77,11 +77,11 @@ def tratadorRequests(client):
                     validacao_client = dao_inst.getClient(username, matricula)
 
                     if (validacao_client == True):
-                        request = montarResponse("200", "OK")
+                        request = montarResponse("200", "OK", json.dumps("Usuário cadastrado"))
                         enviarMensagem(client, request)
 
                     elif (validacao_client == False):
-                        request = montarResponse("404", "Not Found")
+                        request = montarResponse("404", "Not Found", json.dumps("Usuário não cadastrado"))
                         enviarMensagem(client, request)
                         detelarClient(client)
                 
@@ -98,10 +98,10 @@ def tratadorRequests(client):
                         consumo = ultima_medicao[1]
                         dic_ultima_medicao = { "data_hora" : data_hora, "consumo" : consumo}
                         
-                        request = montarResponse("200", json.dumps(dic_ultima_medicao))
+                        request = montarResponse("200", "OK", json.dumps(dic_ultima_medicao))
                         enviarMensagem(client, request)
                     else:
-                        request = montarResponse("404", "Not Found")
+                        request = montarResponse("404", "Not Found", json.dumps(""))
                         enviarMensagem(client, request)
 
                 elif (dados["url_content"] == "/gerar-fatura"):
@@ -122,10 +122,10 @@ def tratadorRequests(client):
                         
                         dic_fatura = { "consumo" : consumo_total , "valor_pagamento" : valor_pagamento}
                         
-                        request = montarResponse("202", json.dumps(dic_fatura))
+                        request = montarResponse("200", "OK", json.dumps(dic_fatura))
                         enviarMensagem(client, request)
                     else:
-                        request = montarResponse("404", "Not Found")
+                        request = montarResponse("404", "Not Found", json.dumps(""))
                         enviarMensagem(client, request)
 
                 elif (dados["url_content"] == "/alerta-consumo"):
@@ -157,14 +157,14 @@ def tratadorRequests(client):
                             excesso_consumo = lista_variacao_consumo[3] - media
                             dic_exc_consumo = { "excesso_consumo" : excesso_consumo }
 
-                            request = montarResponse("200", json.dumps(dic_exc_consumo))
+                            request = montarResponse("200", "OK", json.dumps(dic_exc_consumo))
                             enviarMensagem(client, request)
                         else:
-                            request = montarResponse("200", "Sem consumo excessivo")
+                            request = montarResponse("200", "OK", json.dumps("Sem consumo excessivo"))
                             print(request)
                             enviarMensagem(client, request)
                     else:
-                        request = montarResponse("404", "Not Found")
+                        request = montarResponse("404", "Not Found", "")
                         enviarMensagem(client, request)
 
             elif (data["method"] == "PUT"):
@@ -253,13 +253,14 @@ def obterDadosMensagem(mensagem):
         "body_content": body_content
     }
 
-def montarResponse(status_code, status_mensagem):
+def montarResponse(status_code, status_message, body):
     """
     Monta a "response" a ser enviada
 
         Parâmetros:
             status_code (str): código de status da resposta HTTP do servidor
-            status_mensagem (str): mensagem de status da resposta do servidor
+            status_message (str): mensagem de status da resposta do servidor
+            body (str): corpo da mensagem de retorno
         
         Retornos:
             response (str): resposta HTTP do servidor
@@ -268,12 +269,11 @@ def montarResponse(status_code, status_mensagem):
     host = "127.0.0.1:50000"
     user_agent = "server-conces-energia"
     content_type = "text/html"
-    body = "{\"validar\": \"1\"}"
     content_length = len(body)
 
     response = "{0} {1} {2}\nHost: {3}\nUser-Agent: {4}\nContent-Type: {5}\nContent-Length: {6}\n\n{7}" .format(http_version, 
                                                                                                                 status_code, 
-                                                                                                                status_mensagem, 
+                                                                                                                status_message, 
                                                                                                                 host, 
                                                                                                                 user_agent, 
                                                                                                                 content_type, 
