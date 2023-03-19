@@ -126,3 +126,23 @@ class DAO:
         file.close()
         return lista_medicoes
     
+    @staticmethod
+    def addMedicao(matricula, consumo, data_hora):
+        """
+        Adiciona uma medição de consumo (recebida por um medidor) na base de dados
+
+            Parâmetros:
+                matricula (str): número de matrícula do usuário
+                consumo (str): consumo registrado pelo medidor
+                data_hora (str): data e hora do registro do consumo
+        """
+        file = open("database/medicoes.txt", 'r')
+        lines = file.readlines()
+        file.close()
+
+        medicao = str(data_hora + ";" + matricula + ";" + consumo + "\n")
+        lines.insert(0, medicao)
+
+        file = open("medicoes.txt", 'w')
+        file.writelines(lines)
+        file.close()
