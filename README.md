@@ -38,7 +38,7 @@ A conexão entre dois hosts começa com o primeiro enviando ao segundo um pacote
 Comparando os dois protocolos, o UDP fornece uma comunicação mais rápida e menos custosa, pois não necessita de confirmação de recebimento, porém isso também o faz ter baixa confiabilidade para transmissão de dados; enquanto o TCP possibilita uma maior confibialidade na transmissão de dados, garantindo a integridade dos dados, porém faz com que a comunicação se torne mais lenta e inclusive mais custosa.
 
 #### 2.3 Servidor
-O [servidor](https://github.com/israelbraitt/consumo-de-energia-inteligente/blob/main/servidor/server.py) é responsável por receber as requisições (requests) dos clientes, fazer o processamento devido das informações e enviar a resposta adequada para cada solicitação. Ele pode se conectar tanto com aplicações de usuários que fazem requisções HTTP (comunicação TCP), quanto com medidores que enviam informações através de strings (comunicação UDP).
+O [server](https://github.com/israelbraitt/consumo-de-energia-inteligente/blob/main/servidor/server.py) é responsável por receber as requisições (requests) dos clientes, fazer o processamento devido das informações e enviar a resposta adequada para cada solicitação. Ele pode se conectar tanto com aplicações de usuários que fazem requisções HTTP (comunicação TCP), quanto com medidores que enviam informações através de strings (comunicação UDP).
 
 A requisições possíveis para comunicação com as aplicações de usuários são:
 
