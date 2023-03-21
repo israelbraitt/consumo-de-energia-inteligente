@@ -18,9 +18,7 @@ def main():
     except:
         return print("Não foi possível se conectar ao servidor")
     
-    #validarUsuario(client)
-    username = "amancio123"
-    maricula = "13456789"
+    validarUsuario(client)
     selectionMenu(client)
 
     # Recebe mensagens através da conexão TCP
@@ -38,9 +36,6 @@ def receivemensagems(client):
 
         Parâmetros:
             client (socket.socket): cliente conectado
-        
-        Retornos:
-
     """
     while True:
         try:
@@ -61,9 +56,6 @@ def enviarMensagem(client, mensagem):
         Parâmetros:
             client (socket.socket): cliente conectado
             mensagem (str): mensagem a ser enviada
-        
-        Retornos:
-
     """
     while True:
         try:
@@ -79,9 +71,6 @@ def validarUsuario(client):
 
         Parâmetros:
             client (socket.socket): cliente conectado
-        
-        Retornos:
-
     """
     try:
         print("Digite seu nome de usuário")
@@ -103,9 +92,6 @@ def selectionMenu(client):
 
         Parâmetros:
             client (socket.socket): cliente conectado
-        
-        Retornos:
-
     """
     while True:
         request = ""
@@ -140,9 +126,6 @@ def tratadorResponses(mensagem):
 
         Parâmetros:
             mensagem (str): mensagem a ser enviada
-        
-        Retornos:
-
     """
     while True:
         try:
