@@ -54,19 +54,19 @@ O [server](https://github.com/israelbraitt/consumo-de-energia-inteligente/blob/m
 
 As rotas possíveis para comunicação com as aplicações de usuários são:
 
-- **/validacao-usuario**
+- `/validacao-usuario`
     
     Usada para validar se o usuário está cadastrado na base de dados do sistema.
 
     É necessário indicar o **username** e a **matrícula** do usuário para conferir se o mesmo está validado no sistema.
 
-- **/medicoes/ultima-medicao**
+- `/medicoes/ultima-medicao`
 
     Usada para requisitar ma última medição associada à uma matrícula.
     
     É necessário indicar o número de matrícula associado a um medidor para ser feita a busca pela última medição que foi salva na base de dados.
 
-- **/gerar-fatura**
+- `/gerar-fatura`
     
     Usada para calcular o valor da fatura do último período de consumo registrado.
     
@@ -74,7 +74,7 @@ As rotas possíveis para comunicação com as aplicações de usuários são:
     
     O valor do pagamento é calculado multiplicando-se o consumo do último período registrado pela taxa de consumo, que representa o custo por cada unidade de consumo.
 
-- **/alerta-consumo**
+- `/alerta-consumo`
 
     Usada para indicar se houve consumo excessivo no último período de medição registrado.
     
@@ -96,9 +96,20 @@ Os arquivos da base de dados presentes nesse repositório já estão povoados co
 ## 2.5 Medidor
 O [medidor](https://github.com/israelbraitt/consumo-de-energia-inteligente/blob/main/medidor/medidor.py) é responsável por simular o funcionamento de um medidor de energia elétrica, incrementando o consumo com valores aleatórios.
 
+Ele se comunica com o servidor através do protocolo UDP, dessa forma os dados de consumo não possuem garantia de entrega.
 
-## 3. Melhorias futuras
+Os dados são enviados como uma string codificada no formato JSON.
+
+## 3. Observações gerais
+Para utilizar esse sistema para comunicação com outras máquinas é recomendado que seja alterado o endereço do HOST do servidor, sendo substituído pelo IP do computador que está executando o servidor. Caso seja necessário, altere também as portas de comunicação, para evitar quaisquer conflitos com portas que já estão sendo utilizadas por outras aplicações.
+
+Diversos valores necessários para o sistema foram definidos como constantes, possibilitando que seu valor seja mudado de forma eficiente e sem comprometer o funcionamento correto do sistema, entre eles estão: o valor da taxa (`TAXA_CONSUMO`) de consumo o servidor, o intervalo de incremento de consumo (`INTERVALO_INCREM`) do medidor e o intervalo de envio (`INTERVALO_ENVIO`) do medidor. Altere esses valores de forma que se adeque da melhor forma ao cenário de utilização preferido.
+
+## 4. Melhorias futuras
 O sistema é totalemente funcional, porém pode ser melhorado para se tornar mais eficiente. Entre as melhorias possíveis podem ser citadas:
 - Adicionar variáveis de sessão para salvar informações dos usuários como *matrícula*;
 - Modularizar ainda mais o código, de forma que seja criado um arquivo unicamente com a função de tratar as requests;
 - Criar uma nova base de dados, conectando um banco de dados ao servidor, substituindo os arquivos de texto.
+
+## 5. Repositório no Docker Hub:
+[Consumo de energia inteligente - Docker Hub](https://hub.docker.com/repository/docker/israelbraitt/consumo-de-energia-inteligente/general)
